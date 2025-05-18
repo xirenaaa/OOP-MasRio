@@ -1,0 +1,663 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Random;
+
+public class MazeGame extends JFrame {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new MazeGame().setVisible(true);
+        });
+    }
+
+    private GamePanel gamePanel;
+
+    public MazeGame() {
+        setTitle("Maze Coin Collector");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(false);
+
+        gamePanel = new GamePanel();
+        add(gamePanel);
+        pack();
+
+        setLocationRelativeTo(null); // Center on screen
+
+        // Set up key bindings
+        setupKeyBindings();
+    }
+
+    private void setupKeyBindings() {
+        KeyStroke wKey = KeyStroke.getKeyStroke(KeyEvent.VK_W, 0);
+        KeyStroke aKey = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
+        KeyStroke sKey = KeyStroke.getKeyStroke(KeyEvent.VK_S, 0);
+        KeyStroke dKey = KeyStroke.getKeyStroke(KeyEvent.VK_D, 0);
+
+        // Add key bindings to the game panel
+        gamePanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(wKey, "moveUp");
+        gamePanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(aKey, "moveLeft");
+        gamePanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(sKey, "moveDown");
+        gamePanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(dKey, "moveRight");
+
+        gamePanel.getActionMap().put("moveUp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                gamePanel.movePlayer(0, -1);
+            }
+        });
+
+        gamePanel.getActionMap().put("moveLeft", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                gamePanel.movePlayer(-1, 0);
+            }
+        });
+
+        gamePanel.getActionMap().put("moveDown", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                gamePanel.movePlayer(0, 1);
+            }
+        });
+
+        gamePanel.getActionMap().put("moveRight", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                gamePanel.movePlayer(1, 0);
+            }
+        });
+    }
+}
+
+// Base class for all game objects
+abstract class GameObject {
+    protected int x, y;
+    protected int width, height;
+    protected Color color;
+
+    public GameObject(int x, int y, int width, int height, Color color) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.color = color;
+    }
+
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, width, height);
+    }
+
+    public abstract void draw(Graphics g);
+
+    public boolean collidesWith(GameObject other) {
+        return getBounds().intersects(other.getBounds());
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+}
+
+// Player class
+class Player extends GameObject {
+    private boolean facingRight = true;
+    private int animationCounter = 0;
+
+    public Player(int x, int y) {
+        super(x, y, 20, 20, Color.RED);
+    }
+
+    @Override
+    public void draw(Graphics g) {
+        // Mario-like character
+        g.setColor(color);
+        g.fillRect(x, y, width, height);
+
+        // Hat
+        g.setColor(Color.RED);
+        g.fillRect(x, y, width, height/3);
+
+        // Face
+        g.setColor(new Color(255, 200, 150));
+        g.fillRect(x, y + height/3, width, height/3);
+
+        // Eyes
+        g.setColor(Color.WHITE);
+        if (facingRight) {
+            g.fillOval(x + width/2, y + height/3, width/4, height/4);
+        } else {
+            g.fillOval(x + width/4, y + height/3, width/4, height/4);
+        }
+
+        // Overall straps
+        g.setColor(Color.BLUE);
+        g.fillRect(x + width/4, y + 2*height/3, width/6, height/3);
+        g.fillRect(x + 2*width/3, y + 2*height/3, width/6, height/3);
+
+        // Update animation counter
+        animationCounter++;
+    }
+
+    public void move(int dx, int dy, Wall[] walls) {
+        // Update facing direction
+        if (dx > 0) facingRight = true;
+        else if (dx < 0) facingRight = false;
+
+        int newX = x + dx * width;
+        int newY = y + dy * height;
+
+        // Create a temporary player at the new position to check for collisions
+        Player temp = new Player(newX, newY);
+
+        // Check if the new position collides with any wall
+        boolean collided = false;
+        for (Wall wall : walls) {
+            if (temp.collidesWith(wall)) {
+                collided = true;
+                break;
+            }
+        }
+
+        // Only update position if there's no collision
+        if (!collided) {
+            x = newX;
+            y = newY;
+        }
+    }
+}
+
+// Wall class
+class Wall extends GameObject {
+    private boolean isBrick;
+
+    public Wall(int x, int y) {
+        super(x, y, 20, 20, Color.BLUE);
+        // Randomly determine if this is a brick wall or a solid wall
+        Random rand = new Random();
+        isBrick = rand.nextBoolean();
+    }
+
+    @Override
+    public void draw(Graphics g) {
+        if (isBrick) {
+            // Draw Mario-style brick
+            g.setColor(new Color(205, 133, 63)); // Brown
+            g.fillRect(x, y, width, height);
+
+            // Add brick pattern
+            g.setColor(new Color(165, 93, 23)); // Darker brown
+            g.drawLine(x, y + height/2, x + width, y + height/2);
+            g.drawLine(x + width/2, y, x + width/2, y + height);
+        } else {
+            // Draw solid block
+            g.setColor(new Color(0, 0, 139)); // Dark blue
+            g.fillRect(x, y, width, height);
+
+            // Add block details
+            g.setColor(new Color(0, 0, 225)); // Brighter blue
+            g.fillRect(x + 2, y + 2, width - 4, height - 4);
+        }
+    }
+}
+
+// Coin class
+class Coin extends GameObject {
+    private boolean collected = false;
+    private int animationCounter = 0;
+    private boolean shining = false;
+
+    public Coin(int x, int y) {
+        super(x, y, 10, 10, Color.YELLOW);
+    }
+
+    @Override
+    public void draw(Graphics g) {
+        if (!collected) {
+            // Animate the coin to make it shine occasionally
+            animationCounter++;
+            if (animationCounter > 20) {
+                shining = !shining;
+                animationCounter = 0;
+            }
+
+            if (shining) {
+                g.setColor(Color.YELLOW);
+            } else {
+                g.setColor(new Color(255, 215, 0)); // Gold
+            }
+
+            // Draw a Mario-like coin
+            g.fillOval(x + 5, y + 5, width, height);
+
+            // Add shine effect
+            g.setColor(new Color(255, 255, 200));
+            g.fillOval(x + 7, y + 7, 3, 3);
+        }
+    }
+
+    public boolean isCollected() {
+        return collected;
+    }
+
+    public void collect() {
+        collected = true;
+    }
+}
+
+// Monster base class
+abstract class Monster extends GameObject {
+    protected int dx = 0;
+    protected int dy = 0;
+    protected int speed = 5; // Reduced speed for slower movement
+    protected int moveCounter = 0;
+    protected int moveDelay = 3; // Only move every few game ticks
+
+    public Monster(int x, int y, Color color) {
+        super(x, y, 20, 20, color);
+    }
+
+    public abstract void move(Wall[] walls);
+
+    public boolean shouldMove() {
+        moveCounter++;
+        if (moveCounter >= moveDelay) {
+            moveCounter = 0;
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean willCollideWithWall(Wall[] walls, int newX, int newY) {
+        Rectangle newBounds = new Rectangle(newX, newY, width, height);
+        for (Wall wall : walls) {
+            if (newBounds.intersects(wall.getBounds())) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+// Horizontal monster class
+class HorizontalMonster extends Monster {
+    public HorizontalMonster(int x, int y) {
+        super(x, y, Color.RED);
+        dx = 1; // Start moving right
+    }
+
+    @Override
+    public void draw(Graphics g) {
+        g.setColor(color);
+        g.fillRect(x, y, width, height);
+
+        // Add more Mario-like enemy features
+        g.setColor(Color.WHITE);
+        g.fillOval(x + 5, y + 5, 5, 5);
+        g.fillOval(x + 12, y + 5, 5, 5);
+
+        // Add simple legs
+        g.setColor(Color.BLACK);
+        g.fillRect(x + 3, y + height - 5, 5, 5);
+        g.fillRect(x + width - 8, y + height - 5, 5, 5);
+    }
+
+    @Override
+    public void move(Wall[] walls) {
+        if (!shouldMove()) {
+            return;
+        }
+
+        int newX = x + dx * speed;
+
+        if (willCollideWithWall(walls, newX, y)) {
+            // Change direction if hitting a wall
+            dx *= -1;
+            newX = x + dx * speed;
+        }
+
+        x = newX;
+    }
+}
+
+// Vertical monster class
+class VerticalMonster extends Monster {
+    public VerticalMonster(int x, int y) {
+        super(x, y, Color.GREEN);
+        dy = 1; // Start moving down
+    }
+
+    @Override
+    public void draw(Graphics g) {
+        g.setColor(color);
+        g.fillRect(x, y, width, height);
+
+        // Add more Mario-like enemy features
+        g.setColor(Color.WHITE);
+        g.fillOval(x + 5, y + 5, 5, 5);
+        g.fillOval(x + 12, y + 5, 5, 5);
+
+        // Add shell-like pattern
+        g.setColor(Color.DARK_GRAY);
+        g.fillRect(x + 5, y + 10, width - 10, height - 15);
+    }
+
+    @Override
+    public void move(Wall[] walls) {
+        if (!shouldMove()) {
+            return;
+        }
+
+        int newY = y + dy * speed;
+
+        if (willCollideWithWall(walls, x, newY)) {
+            // Change direction if hitting a wall
+            dy *= -1;
+            newY = y + dy * speed;
+        }
+
+        y = newY;
+    }
+}
+
+// Game panel class
+class GamePanel extends JPanel implements ActionListener {
+    private static final int PANEL_WIDTH = 600;
+    private static final int PANEL_HEIGHT = 600;
+    private static final int TILE_SIZE = 20;
+
+    private Player player;
+    private ArrayList<Coin> coins;
+    private ArrayList<Monster> monsters;
+    private Wall[] walls;
+
+    private Timer gameTimer;
+    private int score = 0;
+    private int topScore = 0;
+    private boolean gameOver = false;
+
+    // Grid representation of the maze (1 = wall, 0 = path)
+    private int[][] mazeGrid = {
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1},
+            {1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+    };
+
+    public GamePanel() {
+        setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
+        setBackground(Color.BLACK);
+        setFocusable(true);
+
+        initGame();
+
+        gameTimer = new Timer(100, this);
+        gameTimer.start();
+    }
+
+    private void initGame() {
+        // Initialize player at a fixed position
+        player = new Player(40, 40);
+
+        // Initialize walls based on the maze grid
+        ArrayList<Wall> wallList = new ArrayList<>();
+        for (int row = 0; row < mazeGrid.length; row++) {
+            for (int col = 0; col < mazeGrid[0].length; col++) {
+                if (mazeGrid[row][col] == 1) {
+                    wallList.add(new Wall(col * TILE_SIZE, row * TILE_SIZE));
+                }
+            }
+        }
+        walls = wallList.toArray(new Wall[0]);
+
+        // Initialize coins
+        coins = new ArrayList<>();
+        initializeCoins();
+
+        // Initialize monsters
+        monsters = new ArrayList<>();
+        initializeMonsters();
+
+        score = 0;
+        gameOver = false;
+    }
+
+    private void initializeCoins() {
+        Random rand = new Random();
+        int coinCount = 0;
+        int maxCoins = 30; // Maximum number of coins to place
+
+        while (coinCount < maxCoins) {
+            int row = rand.nextInt(mazeGrid.length);
+            int col = rand.nextInt(mazeGrid[0].length);
+
+            // Place coin only on paths (not walls)
+            if (mazeGrid[row][col] == 0) {
+                int coinX = col * TILE_SIZE + 5; // Offset to center coin
+                int coinY = row * TILE_SIZE + 5; // Offset to center coin
+
+                // Check if there's already a coin at this position
+                boolean coinExists = false;
+                for (Coin coin : coins) {
+                    if (coin.getX() == coinX && coin.getY() == coinY) {
+                        coinExists = true;
+                        break;
+                    }
+                }
+
+                // Add new coin if position is free
+                if (!coinExists) {
+                    coins.add(new Coin(coinX, coinY));
+                    coinCount++;
+                }
+            }
+        }
+    }
+
+    private void initializeMonsters() {
+        // Add horizontal monsters
+        monsters.add(new HorizontalMonster(120, 140));
+        monsters.add(new HorizontalMonster(320, 240));
+        monsters.add(new HorizontalMonster(120, 340));
+        monsters.add(new HorizontalMonster(400, 440));
+
+        // Add vertical monsters
+        monsters.add(new VerticalMonster(180, 100));
+        monsters.add(new VerticalMonster(420, 200));
+        monsters.add(new VerticalMonster(280, 300));
+        monsters.add(new VerticalMonster(380, 380));
+    }
+
+    public void movePlayer(int dx, int dy) {
+        if (!gameOver) {
+            player.move(dx, dy, walls);
+            checkCollisions();
+        } else {
+            // Restart game if it's over and player presses a key
+            initGame();
+        }
+    }
+
+    private void checkCollisions() {
+        // Check collision with coins
+        for (Coin coin : coins) {
+            if (!coin.isCollected() && player.collidesWith(coin)) {
+                coin.collect();
+                score++;
+                playCoinSound(); // Sound effect method (stub)
+
+                // Check if all coins are collected
+                boolean allCollected = true;
+                for (Coin c : coins) {
+                    if (!c.isCollected()) {
+                        allCollected = false;
+                        break;
+                    }
+                }
+
+                if (allCollected) {
+                    // Victory - all coins collected
+                    if (score > topScore) {
+                        topScore = score;
+                    }
+                    gameOver = true;
+                    playVictorySound(); // Victory sound method (stub)
+                }
+            }
+        }
+
+        // Check collision with monsters
+        for (Monster monster : monsters) {
+            if (player.collidesWith(monster)) {
+                if (score > topScore) {
+                    topScore = score;
+                }
+                gameOver = true;
+                playDefeatSound(); // Defeat sound method (stub)
+                break;
+            }
+        }
+    }
+
+    // Stub methods for sound effects - these would be implemented with proper sound libraries
+    private void playCoinSound() {
+        // In a full implementation, this would play a coin collection sound
+        // System.out.println("Coin collected!");
+    }
+
+    private void playVictorySound() {
+        // Would play victory sound
+        // System.out.println("Victory!");
+    }
+
+    private void playDefeatSound() {
+        // Would play defeat sound
+        // System.out.println("Game over!");
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (!gameOver) {
+            // Move monsters (they have their own speed control now)
+            for (Monster monster : monsters) {
+                monster.move(walls);
+            }
+
+            // Animate coins
+            for (Coin coin : coins) {
+                if (coin instanceof Coin) {
+                    // This will update the animation state
+                    repaint();
+                }
+            }
+
+            // Check collisions after monster movement
+            checkCollisions();
+        }
+
+        // Repaint the game panel
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        // Create a background that looks more like Mario world
+        // Sky background
+        g.setColor(new Color(107, 140, 255));
+        g.fillRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
+
+        // Draw walls
+        for (Wall wall : walls) {
+            wall.draw(g);
+        }
+
+        // Draw coins
+        for (Coin coin : coins) {
+            coin.draw(g);
+        }
+
+        // Draw monsters
+        for (Monster monster : monsters) {
+            monster.draw(g);
+        }
+
+        // Draw player
+        player.draw(g);
+
+        // Draw score in Mario style
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 16));
+        g.drawString("COINS: " + score, 20, PANEL_HEIGHT - 40);
+        g.drawString("TOP SCORE: " + topScore, 20, PANEL_HEIGHT - 20);
+
+        // Draw game over message
+        if (gameOver) {
+            g.setColor(new Color(0, 0, 0, 180)); // Semi-transparent background
+            g.fillRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT);
+
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 36));
+            String message = "Game Over";
+
+            // Check if player won (all coins collected)
+            boolean allCollected = true;
+            for (Coin c : coins) {
+                if (!c.isCollected()) {
+                    allCollected = false;
+                    break;
+                }
+            }
+
+            if (allCollected) {
+                message = "You Win!";
+                g.setColor(Color.GREEN);
+            }
+
+            FontMetrics metrics = g.getFontMetrics();
+            int x = (PANEL_WIDTH - metrics.stringWidth(message)) / 2;
+            int y = PANEL_HEIGHT / 2;
+
+            g.drawString(message, x, y);
+
+            g.setFont(new Font("Arial", Font.PLAIN, 18));
+            String restartMessage = "Press any key to restart";
+            metrics = g.getFontMetrics();
+            x = (PANEL_WIDTH - metrics.stringWidth(restartMessage)) / 2;
+            y = PANEL_HEIGHT / 2 + 40;
+
+            g.drawString(restartMessage, x, y);
+        }
+    }
+}
