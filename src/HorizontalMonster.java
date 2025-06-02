@@ -1,7 +1,21 @@
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
-// Horizontal monster class
+// HorizontalMonster class with image
 class HorizontalMonster extends Monster {
+    private static BufferedImage enemyImage;
+
+    static {
+        try {
+            // Ganti path sesuai dengan lokasi file gambar
+            enemyImage = ImageIO.read(HorizontalMonster.class.getResource("/assets/monster/Violet_1.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public HorizontalMonster(int x, int y) {
         super(x, y, Color.RED);
         dx = 1; // Start moving right
@@ -9,18 +23,13 @@ class HorizontalMonster extends Monster {
 
     @Override
     public void draw(Graphics g) {
-        g.setColor(color);
-        g.fillRect(x, y, width, height);
-
-        // Add more Mario-like enemy features
-        g.setColor(Color.WHITE);
-        g.fillOval(x + 5, y + 5, 5, 5);
-        g.fillOval(x + 12, y + 5, 5, 5);
-
-        // Add simple legs
-        g.setColor(Color.BLACK);
-        g.fillRect(x + 3, y + height - 5, 5, 5);
-        g.fillRect(x + width - 8, y + height - 5, 5, 5);
+        if (enemyImage != null) {
+            g.drawImage(enemyImage, x*4, y*4, width*4, height*4, null);
+        } else {
+            // Fallback: gambar default jika image gagal dimuat
+            g.setColor(Color.RED);
+            g.fillRect(x, y, width, height);
+        }
     }
 
     @Override
@@ -29,14 +38,13 @@ class HorizontalMonster extends Monster {
             return;
         }
 
-        int newX = x + dx * speed;
+//        int newX = x + dx * speed;
 
-        if (willCollideWithWall(walls, newX, y)) {
-            // Change direction if hitting a wall
-            dx *= -1;
-            newX = x + dx * speed;
-        }
+//        if (willCollideWithWall(walls, newX, y)) {
+//            dx *= -1;
+//            newX = x + dx * speed;
+//        }
 
-        x = newX;
+//        x = newX;
     }
 }

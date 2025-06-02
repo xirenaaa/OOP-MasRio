@@ -19,9 +19,8 @@ public class MazeMain extends JFrame {
         add(gamePanel);
         pack();
 
-        setLocationRelativeTo(null); // Center on screen
+        setLocationRelativeTo(null);
 
-        // Set up key bindings
         setupKeyBindings();
     }
 
@@ -31,7 +30,6 @@ public class MazeMain extends JFrame {
         KeyStroke sKey = KeyStroke.getKeyStroke(KeyEvent.VK_S, 0);
         KeyStroke dKey = KeyStroke.getKeyStroke(KeyEvent.VK_D, 0);
 
-        // Add key bindings to the game panel
         gamePanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(wKey, "moveUp");
         gamePanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(aKey, "moveLeft");
         gamePanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(sKey, "moveDown");
@@ -40,28 +38,32 @@ public class MazeMain extends JFrame {
         gamePanel.getActionMap().put("moveUp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.movePlayer(0, -1);
+                gamePanel.moveBackgroundY("atas");
+                Player.setCurrentDirection(3);
             }
         });
 
         gamePanel.getActionMap().put("moveLeft", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.movePlayer(-1, 0);
+                gamePanel.moveBackgroundX("kiri");
+                Player.setCurrentDirection(1);
             }
         });
 
         gamePanel.getActionMap().put("moveDown", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.movePlayer(0, 1);
+                gamePanel.moveBackgroundY("bawah");
+                Player.setCurrentDirection(0);
             }
         });
 
         gamePanel.getActionMap().put("moveRight", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.movePlayer(1, 0);
+                gamePanel.moveBackgroundX("kanan");
+                Player.setCurrentDirection(2);
             }
         });
     }

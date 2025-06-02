@@ -1,36 +1,48 @@
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Random;
+import javax.imageio.ImageIO;
 
-// Wall class
 class Wall extends GameObject {
     private boolean isBrick;
+    private static BufferedImage brickImage;
+    private static BufferedImage solidImage;
+
+    static {
+        try {
+            brickImage = ImageIO.read(Wall.class.getResource("/assets/bener2.png"));
+            solidImage = ImageIO.read(Wall.class.getResource("/assets/bener3.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public Wall(int x, int y) {
-        super(x, y, 20, 20, Color.BLUE);
-        // Randomly determine if this is a brick wall or a solid wall
+        super(x, y, 20 * 4, 20 * 4, Color.BLUE);
         Random rand = new Random();
         isBrick = rand.nextBoolean();
     }
 
     @Override
     public void draw(Graphics g) {
-        if (isBrick) {
-            // Draw Mario-style brick
-            g.setColor(new Color(205, 133, 63)); // Brown
-            g.fillRect(x, y, width, height);
-
-            // Add brick pattern
-            g.setColor(new Color(165, 93, 23)); // Darker brown
-            g.drawLine(x, y + height/2, x + width, y + height/2);
-            g.drawLine(x + width/2, y, x + width/2, y + height);
+        if (isBrick && brickImage != null) {
+            g.drawImage(brickImage, x, y, width, height, null);
+        } else if (!isBrick && solidImage != null) {
+            g.drawImage(brickImage, x, y, width, height, null);
         } else {
-            // Draw solid block
-            g.setColor(new Color(0, 0, 139)); // Dark blue
+            // Fallback if image not loaded
+            g.setColor(Color.RED);
             g.fillRect(x, y, width, height);
-
-            // Add block details
-            g.setColor(new Color(0, 0, 225)); // Brighter blue
-            g.fillRect(x + 2, y + 2, width - 4, height - 4);
         }
+    }
+
+    /**
+     * Mengecek apakah koordinat (checkX, checkY) berada di dalam area Wall ini.
+     * Misal, untuk deteksi tabrakan.
+     */
+    public boolean isAtPosition(int checkX, int checkY) {
+        return (checkX >= x) && (checkX < x + width) &&
+                (checkY >= y) && (checkY < y + height);
     }
 }

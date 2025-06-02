@@ -32,4 +32,16 @@ abstract class Monster extends GameObject {
         }
         return false;
     }
+
+    public void addVerticalMonsterY() {
+    }
+
+    public void addVerticalMonsterX() {
+    }
+
+    public void reduceVerticalMonsterY() {
+    }
+
+    public void reduceVerticalMonsterX() {
+    }
 }
