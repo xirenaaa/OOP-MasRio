@@ -1,73 +1,93 @@
 import java.awt.*;
 
-// Monster base class
 abstract class Monster extends GameObject {
+    protected enum State {
+        IDLE,
+        MOVING
+    }
+    protected State currentState = State.IDLE;
+
+    // Posisi Logis (di grid mana)
+    protected int gridX, gridY;
+
+    // Arah pergerakan dalam grid
     protected int dx = 0;
     protected int dy = 0;
-    protected int speed = 2; // Reduced speed for better gameplay
-    protected int moveCounter = 0;
-    protected int moveDelay = 5; // Slower movement for better collision detection
 
-    public Monster(int x, int y, Color color) {
-        super(x, y, 20, 20, color); // Base size 20x20, will be scaled 4x when drawn
+    // Posisi Visual (koordinat piksel tujuan) dan Kecepatan
+    protected int targetX, targetY;
+    protected int pixelSpeed;
+
+    // Variabel untuk patroli
+    protected int patrolRange;
+    protected int patrolCounter = 0;
+
+    // PERBAIKAN: Variabel baru untuk menyimpan tujuan grid
+    protected int targetGridX, targetGridY;
+
+    public Monster(int gridX, int gridY, int patrolRange, int pixelSpeed, Color color) {
+        // Inisialisasi posisi visual awal berdasarkan posisi grid
+        super(gridX * 80, gridY * 80, 80, 80, color);
+        this.gridX = gridX;
+        this.gridY = gridY;
+
+        // Inisialisasi target awal
+        this.targetX = this.x;
+        this.targetY = this.y;
+        this.targetGridX = this.gridX;
+        this.targetGridY = this.gridY;
+
+        this.patrolRange = patrolRange;
+        this.pixelSpeed = pixelSpeed;
     }
 
-    public abstract void move(Wall[] walls);
+    public abstract void decideMove(int[][] mazeGrid);
 
-    public boolean shouldMove() {
-        moveCounter++;
-        if (moveCounter >= moveDelay) {
-            moveCounter = 0;
-            return true;
-        }
-        return false;
-    }
+    public void updateVisualPosition() {
+        if (currentState == State.MOVING) {
+            if (x < targetX) x = Math.min(x + pixelSpeed, targetX);
+            else if (x > targetX) x = Math.max(x - pixelSpeed, targetX);
 
-    protected boolean willCollideWithWall(Wall[] walls, int newX, int newY) {
-        // Check collision dengan koordinat yang tepat
-        // Monster berukuran 20x20 tapi di-scale 4x saat digambar
-        Rectangle newBounds = new Rectangle(newX * 4, newY * 4, width * 4, height * 4);
+            if (y < targetY) y = Math.min(y + pixelSpeed, targetY);
+            else if (y > targetY) y = Math.max(y - pixelSpeed, targetY);
 
-        for (Wall wall : walls) {
-            if (wall.isBlocking() && newBounds.intersects(wall.getBounds())) {
-                return true;
+            if (x == targetX && y == targetY) {
+                currentState = State.IDLE;
+                // PERBAIKAN: Update posisi logis dari target yang tersimpan, bukan dari perhitungan piksel.
+                gridX = targetGridX;
+                gridY = targetGridY;
             }
         }
-        return false;
     }
 
-    // Methods for world movement (when camera moves)
-    public void addVerticalMonsterY() {
-        y += 20; // Move down in world coordinates
+    protected void startMovingTo(int nextGridX, int nextGridY) {
+        // Simpan tujuan grid
+        this.targetGridX = nextGridX;
+        this.targetGridY = nextGridY;
+
+        // Hitung posisi piksel tujuan dengan mempertahankan offset saat ini
+        int currentOffsetX = x - (gridX * 80);
+        int currentOffsetY = y - (gridY * 80);
+        targetX = (nextGridX * 80) + currentOffsetX;
+        targetY = (nextGridY * 80) + currentOffsetY;
+
+        currentState = State.MOVING;
     }
 
-    public void addVerticalMonsterX() {
-        x -= 20; // Move left in world coordinates (opposite of camera)
+    protected boolean willCollide(int nextGridX, int nextGridY, int[][] mazeGrid) {
+        if (nextGridY < 0 || nextGridY >= mazeGrid.length || nextGridX < 0 || nextGridX >= mazeGrid[0].length) {
+            return true;
+        }
+        return mazeGrid[nextGridY][nextGridX] == 1;
     }
 
-    public void reduceVerticalMonsterY() {
-        y -= 20; // Move up in world coordinates
+    public void shiftVisualPosition(int moveX, int moveY) {
+        this.x += moveX;
+        this.y += moveY;
+        this.targetX += moveX;
+        this.targetY += moveY;
     }
 
-    public void reduceVerticalMonsterX() {
-        x += 20; // Move right in world coordinates (opposite of camera)
-    }
-
-    // Override getBounds to return scaled bounds for proper collision detection
     @Override
-    public Rectangle getBounds() {
-        return new Rectangle(x * 4, y * 4, width * 4, height * 4);
-    }
-
-    // Method untuk mendapatkan center position dalam screen coordinates
-    public Point getCenterPosition() {
-        int centerX = (x * 4) + (width * 4) / 2;
-        int centerY = (y * 4) + (height * 4) / 2;
-        return new Point(centerX, centerY);
-    }
-
-    // Method untuk debugging
-    public void printPosition() {
-        System.out.println("Monster position - World: (" + x + "," + y + "), Screen: (" + (x*4) + "," + (y*4) + ")");
-    }
+    public abstract void draw(Graphics g);
 }

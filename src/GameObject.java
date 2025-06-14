@@ -1,6 +1,5 @@
 import java.awt.*;
 
-// Base class for all game objects
 abstract class GameObject {
     protected int x, y;
     protected int width, height;

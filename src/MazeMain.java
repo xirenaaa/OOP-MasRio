@@ -22,6 +22,18 @@ public class MazeMain extends JFrame {
         setLocationRelativeTo(null);
 
         setupKeyBindings();
+
+        gamePanel.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (gamePanel.isGameOver()) {
+                    gamePanel.restartGame();
+                }
+            }
+        });
+
+        gamePanel.setFocusable(true);
+        gamePanel.requestFocusInWindow();
     }
 
     private void setupKeyBindings() {
@@ -38,37 +50,41 @@ public class MazeMain extends JFrame {
         gamePanel.getActionMap().put("moveUp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.moveBackgroundY("atas");
-                Player.setCurrentDirection(3);
+                if (!gamePanel.isGameOver()) {
+                    gamePanel.moveBackgroundY("atas");
+                    Player.setCurrentDirection(3);
+                }
             }
         });
 
         gamePanel.getActionMap().put("moveLeft", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.moveBackgroundX("kiri");
-                Player.setCurrentDirection(1);
+                if (!gamePanel.isGameOver()) {
+                    gamePanel.moveBackgroundX("kiri");
+                    Player.setCurrentDirection(1);
+                }
             }
         });
 
         gamePanel.getActionMap().put("moveDown", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.moveBackgroundY("bawah");
-                Player.setCurrentDirection(0);
+                if (!gamePanel.isGameOver()) {
+                    gamePanel.moveBackgroundY("bawah");
+                    Player.setCurrentDirection(0);
+                }
             }
         });
 
         gamePanel.getActionMap().put("moveRight", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                gamePanel.moveBackgroundX("kanan");
-                Player.setCurrentDirection(2);
+                if (!gamePanel.isGameOver()) {
+                    gamePanel.moveBackgroundX("kanan");
+                    Player.setCurrentDirection(2);
+                }
             }
         });
     }
 }
-
-
-
-

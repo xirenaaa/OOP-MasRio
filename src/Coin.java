@@ -5,7 +5,7 @@ import java.io.IOException;
 
 class Coin extends GameObject {
     private int originalX, originalY;
-    private int worldX, worldY; // World coordinates for the coin
+    private int worldX, worldY;
     private boolean collected = false;
     private int animationCounter = 0;
     private boolean shining = false;
@@ -25,19 +25,16 @@ class Coin extends GameObject {
         }
     }
 
-    // Method to check collision with player at world coordinates
     public void checkCollisionWithPlayer(int playerWorldX, int playerWorldY) {
         if (!collected) {
-            // Check if player is close enough to collect the coin
             int distance = Math.abs(playerWorldX - worldX) + Math.abs(playerWorldY - worldY);
-            if (distance < 40) { // Adjust collision distance as needed
+            if (distance < 40) {
                 collected = true;
-                GamePanel.addScore(); // Add to score when collected
+                GamePanel.addScore();
             }
         }
     }
 
-    // Get world coordinates
     public int getWorldX() {
         return worldX;
     }
@@ -46,7 +43,6 @@ class Coin extends GameObject {
         return worldY;
     }
 
-    // Method to draw coin at specific screen position (for camera system)
     public void drawAtPosition(Graphics2D g, int screenX, int screenY) {
         if (!collected) {
             animationCounter++;
@@ -69,7 +65,6 @@ class Coin extends GameObject {
     }
 
     public void updateAnimation() {
-        // Animation logic can be added here if needed
         animationCounter++;
         if (animationCounter > 20) {
             shining = !shining;
@@ -92,7 +87,7 @@ class Coin extends GameObject {
                 if (shining) {
                     g.setColor(Color.YELLOW);
                 } else {
-                    g.setColor(new Color(255, 215, 0)); // Gold
+                    g.setColor(new Color(255, 215, 0));
                 }
                 g.fillOval(originalX + 20, originalY + 20, width, height);
             }

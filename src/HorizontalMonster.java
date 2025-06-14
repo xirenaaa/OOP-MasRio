@@ -3,60 +3,47 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
-// HorizontalMonster class with image
 class HorizontalMonster extends Monster {
     private static BufferedImage enemyImage;
 
     static {
         try {
-            // Ganti path sesuai dengan lokasi file gambar
             enemyImage = ImageIO.read(HorizontalMonster.class.getResource("/assets/monster/Violet_1.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public HorizontalMonster(int x, int y) {
-        super(x, y, Color.RED);
-        dx = 1; // Start moving right
+    public HorizontalMonster(int gridX, int gridY, int patrolRange, int pixelSpeed) {
+        super(gridX, gridY, patrolRange, pixelSpeed, Color.RED);
+        dx = 1; // Mulai bergerak ke kanan
     }
 
     @Override
     public void draw(Graphics g) {
         if (enemyImage != null) {
-            // Draw monster dengan scaling 4x untuk konsistensi dengan sistem koordinat
-            g.drawImage(enemyImage, x * 4, y * 4, width * 4, height * 4, null);
+            g.drawImage(enemyImage, x, y, width, height, null);
         } else {
-            // Fallback: gambar default jika image gagal dimuat
             g.setColor(Color.RED);
-            g.fillRect(x * 4, y * 4, width * 4, height * 4);
+            g.fillRect(x, y, width, height);
         }
     }
 
     @Override
-    public void move(Wall[] walls) {
-        if (!shouldMove()) {
-            return;
-        }
+    public void decideMove(int[][] mazeGrid) {
+        if (currentState == State.IDLE) {
+            int nextGridX = gridX + dx;
 
-        int newX = x + dx * speed;
+            if (willCollide(nextGridX, gridY, mazeGrid) || patrolCounter >= patrolRange) {
+                dx *= -1;
+                patrolCounter = 0;
+                nextGridX = gridX + dx;
+            }
 
-        // Check collision dengan walls
-        if (willCollideWithWall(walls, newX, y)) {
-            dx *= -1; // Balik arah jika menabrak tembok
-            newX = x + dx * speed;
-        }
-
-        // Update posisi
-        x = newX;
-
-        // Batasi monster agar tidak keluar dari area game
-        if (x < 0) {
-            x = 0;
-            dx = 1; // Paksakan bergerak ke kanan
-        } else if (x > 600) { // Sesuaikan dengan lebar maze
-            x = 600;
-            dx = -1; // Paksakan bergerak ke kiri
+            if (!willCollide(nextGridX, gridY, mazeGrid)) {
+                startMovingTo(nextGridX, gridY);
+                patrolCounter++;
+            }
         }
     }
 }
