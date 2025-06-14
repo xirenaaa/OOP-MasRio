@@ -14,49 +14,26 @@ class VerticalMonster extends Monster {
                 System.out.println("❌ Gagal load image: null result");
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error loading monster image: " + e.getMessage());
         }
     }
 
     public VerticalMonster(int x, int y) {
-        super(x, y, Color.GREEN); // warna tidak terlalu penting sekarang
+        super(x, y, Color.GREEN);
         dy = 1; // Mulai bergerak ke bawah
     }
 
     @Override
     public void draw(Graphics g) {
         if (enemyImage != null) {
+            // Draw monster dengan scaling 4x untuk konsistensi dengan sistem koordinat
             g.drawImage(enemyImage, x * 4, y * 4, width * 4, height * 4, null);
         } else {
-            // Fallback jika gambar gagal dimuat, tetap pakai ukuran dan posisi sama
+            // Fallback: gambar default jika image gagal dimuat
             g.setColor(Color.GREEN);
             g.fillRect(x * 4, y * 4, width * 4, height * 4);
-            g.setColor(Color.BLACK);
-            g.drawString("M", x * 4 + 5, y * 4 + 15); // Tulis huruf "M" biar jelas
-        }
-
-        if (enemyImage == null) {
-            System.out.println("❌ Gagal load image: null result");
         }
     }
-
-    public void addVerticalMonsterY(){
-        y += 20;
-    };
-
-    public void reduceVerticalMonsterY() {
-        y -= 20;
-    }
-
-    public void addVerticalMonsterX(){
-        x -= 20;
-    };
-
-    public void reduceVerticalMonsterX() {
-        x += 20;
-    }
-
-
 
     @Override
     public void move(Wall[] walls) {
@@ -64,13 +41,24 @@ class VerticalMonster extends Monster {
             return;
         }
 
-//        int newY = y + dy * speed;
-//
-//        if (willCollideWithWall(walls, x, newY)) {
-//            dy *= -1;
-//            newY = y + dy * speed;
-//        }
+        int newY = y + dy * speed;
 
-//        y = newY;
+        // Check collision dengan walls
+        if (willCollideWithWall(walls, x, newY)) {
+            dy *= -1; // Balik arah jika menabrak tembok
+            newY = y + dy * speed;
+        }
+
+        // Update posisi
+        y = newY;
+
+        // Batasi monster agar tidak keluar dari area game
+        if (y < 0) {
+            y = 0;
+            dy = 1; // Paksakan bergerak ke bawah
+        } else if (y > 600) { // Sesuaikan dengan tinggi maze
+            y = 600;
+            dy = -1; // Paksakan bergerak ke atas
+        }
     }
 }
