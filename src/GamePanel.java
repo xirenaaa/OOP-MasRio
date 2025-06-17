@@ -8,6 +8,8 @@ import java.util.Random;
 
 class GamePanel extends JPanel implements ActionListener {
 
+    private final MazeMain mainFrame; // Referensi ke frame utama untuk kontrol musik
+
     private static final int PANEL_WIDTH = 600;
     private static final int PANEL_HEIGHT = 600;
     private static final int TILE_SIZE = 80;
@@ -28,10 +30,7 @@ class GamePanel extends JPanel implements ActionListener {
     int wallx = 0;
     int wally = 0;
 
-    public static void addScore() {
-        score += 1;
-    }
-
+    // ... (mazeGrid tetap sama)
     private final int[][] mazeGrid = {
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -65,7 +64,9 @@ class GamePanel extends JPanel implements ActionListener {
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
-    public GamePanel() {
+
+    public GamePanel(MazeMain mainFrame) {
+        this.mainFrame = mainFrame;
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
         setBackground(Color.BLACK);
         setFocusable(true);
@@ -73,6 +74,16 @@ class GamePanel extends JPanel implements ActionListener {
         gameTimer = new Timer(16, this);
         gameTimer.start();
         requestFocusInWindow();
+    }
+
+    public void setPlayerDirection(int direction) {
+        if (player != null) {
+            player.setCurrentDirection(direction);
+        }
+    }
+
+    public static void addScore() {
+        score += 1;
     }
 
     public boolean isGameOver() {
@@ -85,10 +96,52 @@ class GamePanel extends JPanel implements ActionListener {
         }
         score = 0;
         gameOver = false;
+
+        // Reset posisi dunia (peta) ke titik awal
         wallx = 0;
         wally = 0;
+
+        // Atur ulang semua objek game
         initGame();
     }
+
+    private void initGame() {
+        // Buat player baru di tengah layar
+        player = new Player(PLAYER_SCREEN_X, PLAYER_SCREEN_Y);
+
+        // Kosongkan dan buat ulang semua objek
+        coins = new ArrayList<>();
+        monsters = new ArrayList<>();
+
+        updateWalls();
+        initializeCoins();
+        initializeMonsters();
+
+        gameOver = false; // Pastikan status game tidak over
+    }
+
+    public void setGameOver() {
+        if (!gameOver) { // Pastikan hanya dijalankan sekali
+            gameOver = true;
+            if (score > topScore) topScore = score;
+            mainFrame.stopMusic(); // Hentikan musik melalui frame utama
+        }
+    }
+
+    public boolean isWallAt(int checkX, int checkY) {
+        if (walls == null) {
+            return false; // Perbaikan: kembalikan nilai boolean
+        }
+        for (Wall wall : walls) {
+            if (wall != null && wall.isBlocking() && wall.isAtPosition(checkX, checkY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ... sisa kode di GamePanel (moveBackgroundX, moveBackgroundY, dll) tetap sama
+    // dan tidak perlu diubah. Saya sertakan untuk kelengkapan.
 
     public int moveBackgroundX(String arah) {
         boolean adaTembokKiri = isWallAt(160, 240);
@@ -139,16 +192,6 @@ class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    public boolean isWallAt(int checkX, int checkY) {
-        if (walls == null) return false;
-        for (Wall wall : walls) {
-            if (wall != null && wall.isBlocking() && wall.isAtPosition(checkX, checkY)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     void moveCoins(String arah) {
         if (coins == null) return;
         for (Coin coin : coins) {
@@ -159,21 +202,6 @@ class GamePanel extends JPanel implements ActionListener {
                 else if (Objects.equals(arah, "kiri")) coin.setOriginalX(coin.getOriginalX() + TILE_SIZE);
             }
         }
-    }
-
-    private void initGame() {
-        player = new Player(PLAYER_SCREEN_X, PLAYER_SCREEN_Y);
-        coins = new ArrayList<>();
-        monsters = new ArrayList<>();
-        updateWalls();
-        initializeCoins();
-        initializeMonsters();
-        gameOver = false;
-    }
-
-    public void setGameOver() {
-        gameOver = true;
-        if (score > topScore) topScore = score;
     }
 
     private void updateWalls() {

@@ -1,25 +1,30 @@
 import javax.swing.*;
 import java.awt.event.*;
+import javax.sound.sampled.*;
+import java.io.IOException;
+import java.net.URL;
 
 public class MazeMain extends JFrame {
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new MazeMain().setVisible(true);
-        });
-    }
-
+    private Clip musicClip;
     private final GamePanel gamePanel;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MazeMain().setVisible(true));
+    }
 
     public MazeMain() {
         setTitle("Maze Coin Collector");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        gamePanel = new GamePanel();
+        gamePanel = new GamePanel(this); // Berikan referensi frame ini ke panel
         add(gamePanel);
         pack();
 
         setLocationRelativeTo(null);
+
+        setupMusic("/assets/music/fix_fix_banget.wav"); // Ganti jika nama file berbeda
+        startMusic();
 
         setupKeyBindings();
 
@@ -28,12 +33,42 @@ public class MazeMain extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if (gamePanel.isGameOver()) {
                     gamePanel.restartGame();
+                    startMusic(); // Mulai lagi musik saat game restart
                 }
             }
         });
 
         gamePanel.setFocusable(true);
         gamePanel.requestFocusInWindow();
+    }
+
+    private void setupMusic(String filepath) {
+        try {
+            URL musicURL = getClass().getResource(filepath);
+            if (musicURL == null) {
+                System.err.println("File musik tidak ditemukan di: " + filepath);
+                return;
+            }
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicURL);
+            musicClip = AudioSystem.getClip();
+            musicClip.open(audioStream);
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+            System.err.println("Error saat memuat musik: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void startMusic() {
+        if (musicClip != null && !musicClip.isRunning()) {
+            musicClip.setFramePosition(0); // Putar dari awal
+            musicClip.loop(Clip.LOOP_CONTINUOUSLY);
+        }
+    }
+
+    public void stopMusic() {
+        if (musicClip != null && musicClip.isRunning()) {
+            musicClip.stop();
+        }
     }
 
     private void setupKeyBindings() {
@@ -52,7 +87,7 @@ public class MazeMain extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (!gamePanel.isGameOver()) {
                     gamePanel.moveBackgroundY("atas");
-                    Player.setCurrentDirection(3);
+                    gamePanel.setPlayerDirection(3);
                 }
             }
         });
@@ -62,7 +97,7 @@ public class MazeMain extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (!gamePanel.isGameOver()) {
                     gamePanel.moveBackgroundX("kiri");
-                    Player.setCurrentDirection(1);
+                    gamePanel.setPlayerDirection(1);
                 }
             }
         });
@@ -72,7 +107,7 @@ public class MazeMain extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (!gamePanel.isGameOver()) {
                     gamePanel.moveBackgroundY("bawah");
-                    Player.setCurrentDirection(0);
+                    gamePanel.setPlayerDirection(0);
                 }
             }
         });
@@ -82,7 +117,7 @@ public class MazeMain extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (!gamePanel.isGameOver()) {
                     gamePanel.moveBackgroundX("kanan");
-                    Player.setCurrentDirection(2);
+                    gamePanel.setPlayerDirection(2);
                 }
             }
         });

@@ -5,7 +5,7 @@ import javax.imageio.ImageIO;
 
 class Player extends GameObject {
     private BufferedImage[][] animations;
-    private static int currentDirection = 0;
+    private int currentDirection = 0; // TIDAK LAGI STATIC
     private int frame = 0;
 
     private boolean moving = false;
@@ -37,8 +37,8 @@ class Player extends GameObject {
         }
     }
 
-    public static void setCurrentDirection(int number){
-        currentDirection = number;
+    public void setCurrentDirection(int number){ // TIDAK LAGI STATIC
+        this.currentDirection = number;
     }
 
     @Override
