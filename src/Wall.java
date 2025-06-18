@@ -13,18 +13,16 @@ class Wall extends GameObject {
         try {
             brickImage = ImageIO.read(Wall.class.getResource("/assets/brick_wall.png"));
             grassImage = ImageIO.read(Wall.class.getResource("/assets/grass_background.png"));
-
             System.out.println("Wall textures loaded successfully");
         } catch (IOException e) {
             System.err.println("Error loading wall textures: " + e.getMessage());
-            e.printStackTrace();
         } catch (Exception e) {
             System.err.println("Unexpected error loading textures: " + e.getMessage());
         }
     }
 
     public Wall(int x, int y, boolean isWall) {
-        super(x, y, 20 * 4, 20 * 4, isWall ? Color.GRAY : Color.GREEN);
+        super(x, y, 80, 80, isWall ? Color.GRAY : Color.GREEN);
         this.wallType = isWall ? 1 : 0;
     }
 
@@ -95,10 +93,5 @@ class Wall extends GameObject {
 
     public int getWallType() {
         return wallType;
-    }
-
-    public void setWallType(int type) {
-        this.wallType = type;
-        this.color = (type == 1) ? Color.GRAY : Color.GREEN;
     }
 }

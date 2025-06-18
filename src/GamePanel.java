@@ -8,7 +8,7 @@ import java.util.Random;
 
 class GamePanel extends JPanel implements ActionListener {
 
-    private final MazeMain mainFrame; // Referensi ke frame utama untuk kontrol musik
+    private final MazeMain mainFrame;
 
     private static final int PANEL_WIDTH = 600;
     private static final int PANEL_HEIGHT = 600;
@@ -30,7 +30,6 @@ class GamePanel extends JPanel implements ActionListener {
     int wallx = 0;
     int wally = 0;
 
-    // ... (mazeGrid tetap sama)
     private final int[][] mazeGrid = {
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -96,41 +95,32 @@ class GamePanel extends JPanel implements ActionListener {
         }
         score = 0;
         gameOver = false;
-
-        // Reset posisi dunia (peta) ke titik awal
         wallx = 0;
         wally = 0;
-
-        // Atur ulang semua objek game
         initGame();
     }
 
     private void initGame() {
-        // Buat player baru di tengah layar
         player = new Player(PLAYER_SCREEN_X, PLAYER_SCREEN_Y);
-
-        // Kosongkan dan buat ulang semua objek
         coins = new ArrayList<>();
         monsters = new ArrayList<>();
-
         updateWalls();
         initializeCoins();
         initializeMonsters();
-
-        gameOver = false; // Pastikan status game tidak over
+        gameOver = false;
     }
 
     public void setGameOver() {
-        if (!gameOver) { // Pastikan hanya dijalankan sekali
+        if (!gameOver) {
             gameOver = true;
             if (score > topScore) topScore = score;
-            mainFrame.stopMusic(); // Hentikan musik melalui frame utama
+            mainFrame.stopMusic();
         }
     }
 
     public boolean isWallAt(int checkX, int checkY) {
         if (walls == null) {
-            return false; // Perbaikan: kembalikan nilai boolean
+            return false;
         }
         for (Wall wall : walls) {
             if (wall != null && wall.isBlocking() && wall.isAtPosition(checkX, checkY)) {
@@ -139,9 +129,6 @@ class GamePanel extends JPanel implements ActionListener {
         }
         return false;
     }
-
-    // ... sisa kode di GamePanel (moveBackgroundX, moveBackgroundY, dll) tetap sama
-    // dan tidak perlu diubah. Saya sertakan untuk kelengkapan.
 
     public int moveBackgroundX(String arah) {
         boolean adaTembokKiri = isWallAt(160, 240);
@@ -196,10 +183,11 @@ class GamePanel extends JPanel implements ActionListener {
         if (coins == null) return;
         for (Coin coin : coins) {
             if (coin != null) {
-                if (Objects.equals(arah, "atas")) coin.setOriginalY(coin.getOriginalY() + TILE_SIZE);
-                else if (Objects.equals(arah, "bawah")) coin.setOriginalY(coin.getOriginalY() - TILE_SIZE);
-                else if (Objects.equals(arah, "kanan")) coin.setOriginalX(coin.getOriginalX() - TILE_SIZE);
-                else if (Objects.equals(arah, "kiri")) coin.setOriginalX(coin.getOriginalX() + TILE_SIZE);
+                // Disesuaikan dengan nama method baru di Coin.java
+                if (Objects.equals(arah, "atas")) coin.setScreenY(coin.getScreenY() + TILE_SIZE);
+                else if (Objects.equals(arah, "bawah")) coin.setScreenY(coin.getScreenY() - TILE_SIZE);
+                else if (Objects.equals(arah, "kanan")) coin.setScreenX(coin.getScreenX() - TILE_SIZE);
+                else if (Objects.equals(arah, "kiri")) coin.setScreenX(coin.getScreenX() + TILE_SIZE);
             }
         }
     }
@@ -238,7 +226,8 @@ class GamePanel extends JPanel implements ActionListener {
                 {25, 11}, {25, 28}, {28, 4}, {28, 13}, {28, 27}
         };
         for (int[] pos : coinPositions) {
-            if (isValidPath(pos[0], pos[1])) {
+            if (isValidPath(pos[1], pos[0])) { // Perhatikan: grid adalah [row][col], jadi y,x
+                // Posisi coin adalah posisi grid * TILE_SIZE
                 coins.add(new Coin(pos[0] * TILE_SIZE, pos[1] * TILE_SIZE));
             }
         }
@@ -256,7 +245,7 @@ class GamePanel extends JPanel implements ActionListener {
 
         for (int i = 0; i < monsterPositions.length; i++) {
             int[] pos = monsterPositions[i];
-            if (isValidPath(pos[0], pos[1])) {
+            if (isValidPath(pos[1], pos[0])) { // Perhatikan: grid adalah [row][col], jadi y,x
                 int patrolRange = rand.nextInt(4) + 3;
                 int pixelSpeed = rand.nextInt(3) + 2;
 
@@ -269,7 +258,7 @@ class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    private boolean isValidPath(int col, int row) {
+    private boolean isValidPath(int row, int col) {
         return row >= 0 && row < mazeGrid.length && col >= 0 && col < mazeGrid[0].length && mazeGrid[row][col] == 0;
     }
 
@@ -293,8 +282,9 @@ class GamePanel extends JPanel implements ActionListener {
 
         for (Coin coin : coins) {
             if (coin == null || coin.isCollected()) continue;
-            int coinCenterX = coin.getOriginalX() + TILE_SIZE / 2;
-            int coinCenterY = coin.getOriginalY() + TILE_SIZE / 2;
+            // Disesuaikan dengan nama method baru di Coin.java
+            int coinCenterX = coin.getScreenX() + TILE_SIZE / 2;
+            int coinCenterY = coin.getScreenY() + TILE_SIZE / 2;
             double coinDistance = Math.hypot(playerCenterX - coinCenterX, playerCenterY - coinCenterY);
             if (coinDistance < 50) {
                 coin.collect();

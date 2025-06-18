@@ -5,20 +5,18 @@ import javax.imageio.ImageIO;
 
 class Player extends GameObject {
     private BufferedImage[][] animations;
-    private int currentDirection = 0; // TIDAK LAGI STATIC
+    private int currentDirection = 0;
     private int frame = 0;
 
     private long lastFrameTime = 0;
     private final long frameDuration = 100_000_000;
 
-    private int targetX, targetY;
+    // Variabel dan method tidak terpakai (speed, targetX, targetY, moving, updatePosition, dll.) telah dihapus.
 
     public Player(int x, int y) {
         super(x, y, 80, 80, Color.RED);
         animations = new BufferedImage[4][4];
         loadAnimations();
-        targetX = x;
-        targetY = y;
     }
 
     private void loadAnimations() {
@@ -35,7 +33,7 @@ class Player extends GameObject {
         }
     }
 
-    public void setCurrentDirection(int number){ // TIDAK LAGI STATIC
+    public void setCurrentDirection(int number){
         this.currentDirection = number;
     }
 
@@ -54,15 +52,5 @@ class Player extends GameObject {
             g.setColor(Color.BLUE);
             g.fillRect(x, y, width, height);
         }
-    }
-
-
-    public Point getCenterPosition() {
-        return new Point(x + width/2, y + height/2);
-    }
-
-    public Rectangle getCollisionBounds() {
-        int offset = 10;
-        return new Rectangle(x + offset, y + offset, width - 2*offset, height - 2*offset);
     }
 }

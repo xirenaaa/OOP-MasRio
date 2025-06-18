@@ -4,19 +4,23 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 
 class Coin extends GameObject {
-    private int originalX, originalY;
-    private int worldX, worldY;
+    // Variabel 'originalX/Y' diganti nama menjadi 'screenX/Y' untuk merefleksikan
+    // fungsinya sebagai koordinat render di layar, yang berubah saat peta bergerak.
+    private int screenX, screenY;
+    private int worldX, worldY; // Posisi absolut di dunia game, tidak berubah.
+
     private boolean collected = false;
     private int animationCounter = 0;
     private boolean shining = false;
     private BufferedImage coinImage;
 
     public Coin(int worldX, int worldY) {
-        super(worldX, worldY, 20 * 4, 20 * 4, Color.YELLOW);
+        // Posisi awal di layar sama dengan posisi dunia.
+        super(worldX, worldY, 80, 80, Color.YELLOW);
         this.worldX = worldX;
         this.worldY = worldY;
-        this.originalX = worldX;
-        this.originalY = worldY;
+        this.screenX = worldX;
+        this.screenY = worldY;
 
         try {
             coinImage = ImageIO.read(getClass().getResourceAsStream("/assets/coin/coin.png"));
@@ -25,45 +29,8 @@ class Coin extends GameObject {
         }
     }
 
-    public void checkCollisionWithPlayer(int playerWorldX, int playerWorldY) {
-        if (!collected) {
-            int distance = Math.abs(playerWorldX - worldX) + Math.abs(playerWorldY - worldY);
-            if (distance < 40) {
-                collected = true;
-                GamePanel.addScore();
-            }
-        }
-    }
-
-    public int getWorldX() {
-        return worldX;
-    }
-
-    public int getWorldY() {
-        return worldY;
-    }
-
-    public void drawAtPosition(Graphics2D g, int screenX, int screenY) {
-        if (!collected) {
-            animationCounter++;
-            if (animationCounter > 20) {
-                shining = !shining;
-                animationCounter = 0;
-            }
-
-            if (coinImage != null) {
-                g.drawImage(coinImage, screenX - width/2, screenY - height/2, width, height, null);
-            } else {
-                if (shining) {
-                    g.setColor(Color.YELLOW);
-                } else {
-                    g.setColor(new Color(255, 215, 0)); // Gold
-                }
-                g.fillOval(screenX - width/2, screenY - height/2, width, height);
-            }
-        }
-    }
-
+    // Semua method yang tidak terpakai seperti checkCollisionWithPlayer, getWorldX/Y,
+    // drawAtPosition, updateAnimation, dll. telah dihapus.
 
     @Override
     public void draw(Graphics g) {
@@ -75,23 +42,24 @@ class Coin extends GameObject {
             }
 
             if (coinImage != null) {
-                g.drawImage(coinImage, originalX, originalY, width, height, null);
+                // Menggambar menggunakan screenX dan screenY
+                g.drawImage(coinImage, screenX, screenY, width, height, null);
             } else {
                 if (shining) {
                     g.setColor(Color.YELLOW);
                 } else {
                     g.setColor(new Color(255, 215, 0));
                 }
-                g.fillOval(originalX + 20, originalY + 20, width, height);
+                g.fillOval(screenX, screenY, width, height);
             }
         }
     }
 
-    public void setOriginalX(int x) { this.originalX = x; }
-    public void setOriginalY(int y) { this.originalY = y; }
-
-    public int getOriginalX() { return originalX; }
-    public int getOriginalY() { return originalY; }
+    // Setter dan Getter untuk posisi layar (screenX/Y)
+    public void setScreenX(int x) { this.screenX = x; }
+    public void setScreenY(int y) { this.screenY = y; }
+    public int getScreenX() { return screenX; }
+    public int getScreenY() { return screenY; }
 
     public boolean isCollected() {
         return collected;

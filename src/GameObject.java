@@ -19,9 +19,8 @@ abstract class GameObject {
 
     public abstract void draw(Graphics g);
 
-    public boolean collidesWith(GameObject other) {
-        return getBounds().intersects(other.getBounds());
-    }
+    // Method collidesWith(GameObject other) dihapus karena tidak pernah digunakan.
+    // Logika kolisi diimplementasikan secara spesifik di GamePanel.
 
     public int getX() {
         return x;
