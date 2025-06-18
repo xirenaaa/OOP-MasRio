@@ -64,13 +64,6 @@ class Coin extends GameObject {
         }
     }
 
-    public void updateAnimation() {
-        animationCounter++;
-        if (animationCounter > 20) {
-            shining = !shining;
-            animationCounter = 0;
-        }
-    }
 
     @Override
     public void draw(Graphics g) {
@@ -106,13 +99,5 @@ class Coin extends GameObject {
 
     public void collect() {
         collected = true;
-    }
-
-    public void removeIfAt240_240() {
-        if (!collected && originalX == 240 && originalY == 240) {
-            collect();
-            GamePanel.addScore();
-            System.out.println("Koin di (240, 240) telah dihilangkan.");
-        }
     }
 }

@@ -8,11 +8,9 @@ class Player extends GameObject {
     private int currentDirection = 0; // TIDAK LAGI STATIC
     private int frame = 0;
 
-    private boolean moving = false;
     private long lastFrameTime = 0;
     private final long frameDuration = 100_000_000;
 
-    private int speed = 4;
     private int targetX, targetY;
 
     public Player(int x, int y) {
@@ -58,14 +56,6 @@ class Player extends GameObject {
         }
     }
 
-    public void updatePosition() {
-        int dx = Integer.compare(targetX, x);
-        int dy = Integer.compare(targetY, y);
-
-        if (x == targetX && y == targetY) {
-            moving = false;
-        }
-    }
 
     public Point getCenterPosition() {
         return new Point(x + width/2, y + height/2);
@@ -74,9 +64,5 @@ class Player extends GameObject {
     public Rectangle getCollisionBounds() {
         int offset = 10;
         return new Rectangle(x + offset, y + offset, width - 2*offset, height - 2*offset);
-    }
-
-    public void printPosition() {
-        System.out.println("Player position: (" + x + "," + y + "), Center: " + getCenterPosition());
     }
 }
